@@ -38,11 +38,20 @@ def extract_intent_node(state: AgentState):
         prompt = f"Analyze this user query and extract the country and their intent: {query}"
         result = structured_llm.invoke(prompt)
         
-        if not result.is_valid_country_query:
+        if isinstance(result, dict):
+            is_valid = result.get("is_valid_country_query")
+            country = result.get("country", "")
+            intent = result.get("intent", [])
+        else:
+            is_valid = result.is_valid_country_query
+            country = result.country
+            intent = result.intent
+
+        if not is_valid:
             logger.warning("Invalid country query detected.")
             return {"error": "Invalid query. Please ask a specific question about a real country."}
         
-        return {"country": result.country.lower(), "intent": result.intent}
+        return {"country": country.lower(), "intent": intent}
     
     except Exception as e:
         logger.error(f"Intent extraction failed: {str(e)}")
